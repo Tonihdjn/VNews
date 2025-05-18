@@ -4,39 +4,33 @@ from qdrant_client.models import VectorParams, Distance, Filter
 import numpy as np
 from transformers import BertTokenizer, BertModel
 from neo4j import GraphDatabase
-# Initialize Qdrant client
-client = QdrantClient(url="http://localhost:6333")  # Adjust URL if necessary
-# Initialize Neo4j driver
-uri = "bolt://localhost:7687"  # Neo4j connection URI (adjust if necessary)
-username = "c2_userNamePlease"  # Your Neo4j username
-password = "c2PasswordPlease"  # Your Neo4j password
-driver = GraphDatabase.driver(uri, auth=(username, password))
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-model = BertModel.from_pretrained('bert-base-uncased')
-# Collection name
+# --- Neo4j Graph Database Setup ---
+uri = "bolt://localhost:7687"  # Sesuaikan dengan URI Neo4j Anda
+username = "neo4j"
+password = "password"
+
+# --- Qdrant Vector Database Setup ---
+client = QdrantClient(host="localhost", port=6333)
+
+# Nama koleksi di Qdrant
 collection_name = "articles"
-def generate_embedding(text):
-    inputs = tokenizer(text, return_tensors='pt', truncation=True, padding=True, max_length=512)
-    with torch.no_grad():
-        outputs = model(**inputs)
-    # Take the [CLS] token (first token) embedding as sentence embedding
-    embedding = outputs.last_hidden_state[:, 0, :].squeeze().numpy()
-    return embedding
-def fetchForId(q) : 
-    qq = generate_embedding(qq)
-    filter = {
-        "must": [
-            {"range": {"similarity_score": {"gte": 0.5}}}  # Optional filter: adjust based on your data
-        ]
-    }
-    results = client.search(
+
+# Membuat koneksi ke Neo4j
+graph_db = GraphDatabase.driver(uri, auth=(username, password))
+def fetch_graph_data():
+    with graph_db.session() as session:
+        query = """
+        MATCH (p:Person)-[:WRITES]->(a:Article)
+        RETURN p.name AS person_name, a.title AS article_title
+        """
+        result = session.run(query)
+        return result
+# Fungsi untuk melakukan pencarian vektor di Qdrant
+def search_vector_db(query_vector, k=5):
+    result = client.search(
         collection_name=collection_name,
-        query_vector=qq,
-        limit=10,  # Top-k results
-        filter=filter,  # Optional filter
-        with_payload=True  # Include metadata (e.g., article title) with the results
+        query_vector=query_vector,
+        top=k,
+        with_payload=True
     )
-    return results.id
-def query(tx, q):
-    # Use the transaction object (tx) to run a Cypher query
-    tx.run(q)
+    return result
