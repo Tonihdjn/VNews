@@ -1,0 +1,53 @@
+{
+  "users": [
+    { "id": "13001", "name": "Ayu Sari", "role": "jurnalis", "region": "Bandung" },
+    { "id": "13002", "name": "Rudi Hartono", "role": "editor", "region": "Jakarta" },
+    { "id": "13003", "name": "Budi Santoso", "role": "pembaca", "region": "Surabaya" },
+    { "id": "13004", "name": "Citra Dewi", "role": "pembaca", "region": "Bandung" },
+    { "id": "13005", "name": "Eka Wijaya", "role": "jurnalis", "region": "Yogyakarta" },
+    { "id": "13006", "name": "Andi Saputra", "role": "editor", "region": "Jakarta" },
+    { "id": "13007", "name": "Fina Nabila", "role": "pembaca", "region": "Medan" },
+    { "id": "13008", "name": "Gilang Pratama", "role": "jurnalis", "region": "Makassar" },
+    { "id": "13009", "name": "Hana Kurnia", "role": "editor", "region": "Bandung" },
+    { "id": "13010", "name": "Imam Syafiq", "role": "pembaca", "region": "Jakarta" }
+  ],
+  "articles": [
+    { "id_berita": "12001", "tgl_publikasi": "2024-05-01", "kategori": "Politik", "jumlah_pembaca": 231 },
+    { "id_berita": "12002", "tgl_publikasi": "2024-05-02", "kategori": "Ekonomi", "jumlah_pembaca": 189 },
+    { "id_berita": "12003", "tgl_publikasi": "2024-05-03", "kategori": "Olahraga", "jumlah_pembaca": 154 },
+    { "id_berita": "12004", "tgl_publikasi": "2024-05-04", "kategori": "Budaya", "jumlah_pembaca": 120 },
+    { "id_berita": "12005", "tgl_publikasi": "2024-05-05", "kategori": "Teknologi", "jumlah_pembaca": 200 },
+    { "id_berita": "12006", "tgl_publikasi": "2024-05-06", "kategori": "Politik", "jumlah_pembaca": 175 },
+    { "id_berita": "12007", "tgl_publikasi": "2024-05-07", "kategori": "Ekonomi", "jumlah_pembaca": 210 },
+    { "id_berita": "12008", "tgl_publikasi": "2024-05-08", "kategori": "Olahraga", "jumlah_pembaca": 160 },
+    { "id_berita": "12009", "tgl_publikasi": "2024-05-09", "kategori": "Budaya", "jumlah_pembaca": 130 },
+    { "id_berita": "12010", "tgl_publikasi": "2024-05-10", "kategori": "Teknologi", "jumlah_pembaca": 240 },
+    { "id_berita": "12011", "tgl_publikasi": "2024-05-11", "kategori": "Politik", "jumlah_pembaca": 220 },
+    { "id_berita": "12012", "tgl_publikasi": "2024-05-12", "kategori": "Ekonomi", "jumlah_pembaca": 195 },
+    { "id_berita": "12013", "tgl_publikasi": "2024-05-13", "kategori": "Olahraga", "jumlah_pembaca": 180 },
+    { "id_berita": "12014", "tgl_publikasi": "2024-05-14", "kategori": "Budaya", "jumlah_pembaca": 140 },
+    { "id_berita": "12015", "tgl_publikasi": "2024-05-15", "kategori": "Teknologi", "jumlah_pembaca": 260 }
+  ],
+  "relationships": [
+    { "from": "13001", "to": "12001", "type": "WRITE" },
+    { "from": "13002", "to": "12001", "type": "EDIT" },
+    { "from": "13003", "to": "12001", "type": "READ" },
+    { "from": "13004", "to": "12002", "type": "READ" },
+    { "from": "13005", "to": "12002", "type": "WRITE" },
+    { "from": "13006", "to": "12002", "type": "EDIT" },
+    { "from": "13007", "to": "12003", "type": "READ" },
+    { "from": "13008", "to": "12003", "type": "WRITE" },
+    { "from": "13009", "to": "12003", "type": "EDIT" },
+    { "from": "13010", "to": "12004", "type": "READ" },
+    { "from": "13001", "to": "12004", "type": "WRITE" },
+    { "from": "13002", "to": "12004", "type": "EDIT" },
+    { "from": "13003", "to": "12005", "type": "READ" },
+    { "from": "13004", "to": "12005", "type": "WRITE" },
+    { "from": "13005", "to": "12005", "type": "EDIT" },
+    { "from": "13006", "to": "12006", "type": "READ" },
+    { "from": "13007", "to": "12006", "type": "WRITE" },
+    { "from": "13008", "to": "12006", "type": "EDIT" },
+    { "from": "13009", "to": "12007", "type": "READ" },
+    { "from": "13010", "to": "12007", "type": "WRITE" }
+  ]
+}
