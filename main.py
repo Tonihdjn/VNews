@@ -16,20 +16,43 @@ def page_1():
     if query:
         # Query untuk mencari nama orang/artikel di Graph Database
         graph_query = f"""
-        MATCH (p:Person)-[:WRITES]->(a:Article)
-        WHERE p.name CONTAINS '{query}' OR a.title CONTAINS '{query}'
-        RETURN p.name AS person_name, a.title AS article_title, a.content AS article_content
+            MATCH (p:Person)-[r]->(a:Article)
+            WHERE p.name CONTAINS '{query}' OR a.title CONTAINS '{query}'
+            RETURN p.name AS person_name, 
+                   a.title AS article_title, 
+                   a.content AS article_content, 
+                   type(r) AS relationship_type
         """
-        graph_data = ag.fetch_graph_data(graph_query)
         
-        # Mengonversi hasil Graph Database menjadi DataFrame
-        graph_df = [{"Person": record["person_name"], "Article": record["article_title"], "Content": record["article_content"]} for record in graph_data]
-        
-        if graph_df:
-            st.write("Hasil Pencarian:")
-            st.dataframe(pd.DataFrame(graph_df))
-        else:
-            st.write("Tidak ada hasil yang ditemukan.")
+        # Fetch data from the Graph Database
+        try:
+            graph_data = ag.fetch_graph_data(graph_query)  # Assuming ag.fetch_graph_data is your method to fetch the data
+            if not graph_data:
+                st.write("Tidak ada hasil yang ditemukan.")
+            else:
+                # Convert Graph Data to a structured format
+                graph_df = []
+                for record in graph_data:
+                    graph_df.append({
+                        "Person": record["person_name"],
+                        "Article": record["article_title"],
+                        "Content": record["article_content"],
+                        "Relationship": record["relationship_type"]
+                    })
+                
+                # Convert to Pandas DataFrame for better visualization
+                graph_df = pd.DataFrame(graph_df)
+                
+                # Display the result
+                st.write("Hasil Pencarian:")
+                st.dataframe(graph_df)
+
+                # Optional: Allow the user to filter or interact further with the displayed results
+                with st.expander("View Article Content"):
+                    st.write(graph_df["Content"].to_list())
+                    
+        except Exception as e:
+            st.error(f"Terjadi kesalahan saat mengambil data: {e}")
 
 # Fungsi untuk menampilkan halaman kedua: Mencari artikel dengan topik yang sama
 def page_2():
