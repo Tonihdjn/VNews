@@ -17,12 +17,8 @@ collection_name = "articles"
 
 # Membuat koneksi ke Neo4j
 graph_db = GraphDatabase.driver(uri, auth=(username, password))
-def fetch_graph_data():
+def fetch_graph_data(query):
     with graph_db.session() as session:
-        query = """
-        MATCH (p:Person)-[:WRITES]->(a:Article)
-        RETURN p.name AS person_name, a.title AS article_title
-        """
         result = session.run(query)
         return result
 # Fungsi untuk melakukan pencarian vektor di Qdrant
