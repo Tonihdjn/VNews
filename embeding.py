@@ -3,6 +3,8 @@ from transformers import BertTokenizer, BertModel
 from qdrant_client import QdrantClient
 from qdrant_client.models import VectorParams, Distance, PointStruct
 import json
+from sentence_transformers import SentenceTransformer
+
 client = QdrantClient(url="http://localhost:6333")  # Adjust URL if necessary
 # Initialize BERT model and tokenizer
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -15,6 +17,16 @@ def generate_embedding(text):
         outputs = model(**inputs)
     # Take the [CLS] token (first token) embedding as sentence embedding
     embedding = outputs.last_hidden_state[:, 0, :].squeeze().numpy()
+    return embedding
+
+# Load pre-trained BERT model
+model = SentenceTransformer('all-MiniLM-L6-v2')  # ringan dan cocok untuk semantic search
+
+def generate_embedding_search(text):
+    """
+    Mengubah input teks menjadi vektor menggunakan model BERT (SentenceTransformer)
+    """
+    embedding = model.encode(text, convert_to_numpy=True)
     return embedding
 
 # Initialize Qdrant clie
