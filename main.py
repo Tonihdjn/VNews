@@ -53,59 +53,94 @@ def page_1():
                     
         except Exception as e:
             st.error(f"Terjadi kesalahan saat mengambil data: {e}")
-
-# Fungsi untuk menampilkan halaman kedua: Mencari artikel dengan topik yang sama
 def page_2():
     st.subheader("Cari Artikel dengan Topik Sama")
     
-    # Input query teks untuk mencari artikel berdasarkan topik
     query_text = st.text_input("Masukkan topik atau kata kunci:")
     
     if query_text:
-        # Mengubah teks menjadi vektor menggunakan SentenceTransformer
-        query_vector = em.generate_embedding_search(query_text)
-        
-        # Mencari artikel berdasarkan query vektor di Qdrant
+        query_vector = em.generate_embedding(query_text)
         results = ag.search_vector_db(query_vector)
-        
-        # Menyusun hasil pencarian
         results_list = [{"Artikel ID": result.id, "Skor": result.score, "Payload": result.payload} for result in results]
-        
         if results_list:
             st.write("Artikel dengan topik yang relevan:")
-            st.dataframe(pd.DataFrame(results_list))
+            for idx, artikel in enumerate(results_list):
+
+                title = artikel["Payload"].get("judul", f"Artikel {idx+1}")
+                # Buat button per artikel dengan key unik
+                if st.button(title, key=f"artikel_btn_{idx} : {title}"):
+                    # Simpan ID artikel yang dipilih di session_state
+                    st.session_state["selected_article_id"] = artikel["Artikel ID"]
+                    st.session_state["payload"] = artikel["Payload"]
+                    # Ubah halaman aktif ke page_3
+                    st.session_state["page"] = "page_3"
+                    # Panggil page_3 langsung
+                    page_3()
+                    # Stop eksekusi supaya tidak lanjut render page_2
+                    return
         else:
             st.write("Tidak ada artikel yang ditemukan untuk topik ini.")
 
-# Fungsi untuk menampilkan halaman ketiga: Menampilkan detail artikel yang dipilih
 def page_3():
     st.subheader("Detail Artikel")
     
-    # Menampilkan ID artikel yang dipilih
-    article_id = st.text_input("Masukkan ID Artikel untuk melihat detail:")
-    if article_id:
-        # Query untuk mengambil informasi lebih lanjut tentang artikel yang dipilih
-        graph_query = f"""
-        MATCH (p:Person)-[:WRITES]->(a:Article)
-        WHERE a.id = '{article_id}'
-        RETURN p.name AS person_name, a.title AS article_title, a.content AS article_content
-        """
-        graph_data = ag.fetch_graph_data(graph_query)
-        
-        if graph_data:
-            for record in graph_data:
-                st.write(f"**Artikel Title**: {record['article_title']}")
-                st.write(f"**Isi Artikel**: {record['article_content']}")
-                st.write(f"**Penulis**: {record['person_name']}")
-        else:
-            st.write("Artikel tidak ditemukan.")
+    article_id = st.session_state.get("selected_article_id", None)
+    paylo = st.session_state["payload"]
+    if article_id is None:
+        st.write("Tidak ada artikel yang dipilih. Silakan kembali ke pencarian.")
+        if st.button("Kembali ke pencarian"):
+            st.session_state["page"] = "page_2"
+            st.experimental_rerun()
+        return
+    
+    # Query contoh untuk fetch detail artikel
+    graph_query = f"""
+    MATCH (p:User)-[r]->(a:Article)
+    WHERE a.id_berita CONTAINS '{article_id}'
+    RETURN p.name AS person_name, 
+        a.kategori AS article_kategori, 
+        a.tgl_publikasi AS article_pub, 
+        a.jumlah_pembaca AS article_p  
+    """
+    graph_data = ag.fetch_graph_data(graph_query)
+    st.write(graph_data)
+    if graph_data:
+        for record in graph_data:
+            st.write(f"**Judul Artikel:** {paylo['judul']}")
+            st.write(f"**Tgl Artikel:** {record['article_pub']}")
+            st.write(f"**kategori Artikel:** {record['article_kategori']}")
+            st.write(f"**jumlah pembaca Artikel:** {record['article_p']}")
+            st.write(f"**Isi Artikel:** {paylo['isi']}")
+            st.write(f"**Penulis:** {record['person_name']}")
 
-# Fungsi untuk memilih halaman
-page = st.sidebar.selectbox("Pilih Halaman", ("Page 1: Cari Nama Orang/Artikel", "Page 2: Cari Artikel dengan Topik Sama", "Page 3: Detail Artikel"))
+    else:
+        st.write("Artikel tidak ditemukan.")
+    
+    if st.button("Kembali ke pencarian"):
+        st.session_state["page"] = "page_2"
+        st.experimental_rerun()
 
+# Atur halaman default
+if "page" not in st.session_state:
+    st.session_state["page"] = "page_1"
+
+# Sidebar hanya untuk Page 1 dan Page 2
+page = st.sidebar.selectbox(
+    "Pilih Halaman",
+    ("Page 1: Cari Nama Orang/Artikel", "Page 2: Cari Artikel dengan Topik Sama"),
+    index=0 if st.session_state["page"] == "page_1" else 1
+)
+
+# Update session_state dari sidebar agar sinkron
 if page == "Page 1: Cari Nama Orang/Artikel":
-    page_1()
+    st.session_state["page"] = "page_1"
 elif page == "Page 2: Cari Artikel dengan Topik Sama":
+    st.session_state["page"] = "page_2"
+
+# Render halaman sesuai session_state
+if st.session_state["page"] == "page_1":
+    page_1()
+elif st.session_state["page"] == "page_2":
     page_2()
-elif page == "Page 3: Detail Artikel":
+elif st.session_state["page"] == "page_3":
     page_3()

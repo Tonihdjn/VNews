@@ -20,14 +20,6 @@ def generate_embedding(text):
     return embedding
 
 # Load pre-trained BERT model
-model = SentenceTransformer('all-MiniLM-L6-v2')  # ringan dan cocok untuk semantic search
-
-def generate_embedding_search(text):
-    """
-    Mengubah input teks menjadi vektor menggunakan model BERT (SentenceTransformer)
-    """
-    embedding = model.encode(text, convert_to_numpy=True)
-    return embedding
 
 # Initialize Qdrant clie
 

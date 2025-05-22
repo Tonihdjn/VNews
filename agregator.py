@@ -29,7 +29,7 @@ def search_vector_db(query_vector, k=5):
     result = client.search(
         collection_name=collection_name,
         query_vector=query_vector,
-        top=k,
+        limit=k,
         with_payload=True
     )
     return result
