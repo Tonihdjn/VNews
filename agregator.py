@@ -1,35 +1,186 @@
-import torch
-from qdrant_client import QdrantClient
-from qdrant_client.models import VectorParams, Distance, Filter
-import numpy as np
-from transformers import BertTokenizer, BertModel
+# from neo4j import GraphDatabase
+# from qdrant_client import QdrantClient
+# import numpy as np
+
+# uri = "bolt://localhost:7687"
+# username = "neo4j"
+# password = "Pumkin!!22"
+
+# client = QdrantClient(host="localhost", port=6333)
+# collection_name = "article's"
+
+# graph_db = GraphDatabase.driver(uri, auth=(username, password))
+
+# def fetch_graph_data(query):
+#     with graph_db.session() as session:
+#         result = session.run(query)
+#         return [record.data() for record in result]
+
+# def search_vector_db(query_vector, k=5):
+#     # Pencarian dengan index Qdrant
+#     result = client.search(
+#         collection_name=collection_name,
+#         query_vector=query_vector,
+#         limit=k,
+#         with_payload=True
+#     )
+#     return result
+
+# def search_vector_db_no_index(query_vector, k=5):
+#     import numpy as np
+
+#     all_points = []
+
+#     for batch in client.scroll(collection_name=collection_name, with_vectors=True, with_payload=True):
+#         points_batch = getattr(batch, "points", None)
+#         if points_batch is not None:
+#             all_points.extend(points_batch)
+#         elif isinstance(batch, list):
+#             all_points.extend(batch)
+#         else:
+#             all_points.append(batch)
+
+#     vectors = []
+#     payloads = []
+#     ids = []
+
+#     for pt in all_points:
+#         # pastikan pt bukan int, dan punya atribut vector
+#         if hasattr(pt, "vector") and hasattr(pt, "payload") and hasattr(pt, "id"):
+#             vectors.append(pt.vector)
+#             payloads.append(pt.payload)
+#             ids.append(pt.id)
+#         else:
+#             # skip item yang bukan objek point valid
+#             continue
+
+#     vectors = np.array(vectors)
+#     query_vec = np.array(query_vector)
+
+#     def cosine_sim(a, b):
+#         return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+#     sims = np.array([cosine_sim(query_vec, v) for v in vectors])
+
+#     topk_idx = sims.argsort()[-k:][::-1]
+
+#     results = []
+#     for idx in topk_idx:
+#         results.append(
+#             type("Result", (), {
+#                 "id": ids[idx],
+#                 "score": float(sims[idx]),
+#                 "payload": payloads[idx]
+#             })()
+#         )
+
+#     return results
+
 from neo4j import GraphDatabase
-# --- Neo4j Graph Database Setup ---
-uri = "bolt://localhost:7687"  # Sesuaikan dengan URI Neo4j Anda
+from qdrant_client import QdrantClient
+import numpy as np
+from qdrant_client import models # Pastikan models di-import
+uri = "bolt://localhost:7687"
 username = "neo4j"
-password = "Pumkin!!22"  
+password = "Rafanaja05!"
 
-# --- Qdrant Vector Database Setup ---
 client = QdrantClient(host="localhost", port=6333)
-
-# Nama koleksi di Qdrant
 collection_name = "article's"
 
-# Membuat koneksi ke Neo4j
 graph_db = GraphDatabase.driver(uri, auth=(username, password))
 
-def fetch_graph_data(query):
+def fetch_graph_data(query, params=None):
     with graph_db.session() as session:
-        result = session.run(query)
-        # Ambil semua hasil sebelum result ditutup/di-consume
+        result = session.run(query, parameters=params or {})
         return [record.data() for record in result]
-    
-# Fungsi untuk melakukan pencarian vektor di Qdrant
-def search_vector_db(query_vector, k=5):
-    result = client.search(
-        collection_name=collection_name,
+
+
+def search_vector_db_with_index(query_vector, k=5):
+    results = client.search(
+        collection_name="article's",
         query_vector=query_vector,
-        top=k,
+        limit=k,
         with_payload=True
     )
-    return result
+    formatted_results = []
+    for r in results:
+        formatted_results.append({
+            "id": r.id,
+            "score": r.score,
+            "payload": r.payload
+        })
+    return formatted_results
+def search_vector_db_brute_force(query_vector, k=5):
+    """
+    Melakukan pencarian brute-force (full-scan) tanpa menggunakan HNSW index.
+    """
+    results = client.search(
+        collection_name="article's",  # Targetkan collection yang sama dengan pencarian ber-index
+        query_vector=query_vector,
+        limit=k,
+        with_payload=True,
+        # INI BAGIAN PENTINGNYA:
+        # Memaksa Qdrant untuk melakukan pencarian eksak (brute-force)
+        search_params=models.SearchParams(
+            exact=True, # Mengabaikan HNSW index dan membandingkan semua vektor
+            indexed_only=False # Memastikan pencarian juga dilakukan pada data yang belum ter-index
+        )
+    )
+    # Anda bisa format hasilnya jika perlu, sama seperti fungsi with_index Anda
+    formatted_results = []
+    for r in results:
+        formatted_results.append({
+            "id": r.id,
+            "score": r.score,
+            "payload": r.payload
+        })
+    return formatted_results
+
+# def search_vector_db_with_index(query_vector, k=5):
+#     all_points = []
+
+#     for batch in client.scroll(collection_name=collection_name, with_vectors=True, with_payload=True):
+#         points_batch = getattr(batch, "points", None)
+#         if points_batch is not None:
+#             all_points.extend(points_batch)
+#         elif isinstance(batch, list):
+#             all_points.extend(batch)
+#         else:
+#             all_points.append(batch)
+
+#     vectors = []
+#     payloads = []
+#     ids = []
+
+#     for pt in all_points:
+#         if hasattr(pt, "vector") and hasattr(pt, "payload") and hasattr(pt, "id"):
+#             vectors.append(pt.vector)
+#             payloads.append(pt.payload)
+#             ids.append(pt.id)
+
+#     vectors = np.array(vectors)
+#     query_vec = np.array(query_vector)
+
+#     def cosine_sim(a, b):
+#         return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+#     sims = np.array([cosine_sim(query_vec, v) for v in vectors])
+
+#     topk_idx = sims.argsort()[-k:][::-1]
+
+#     results = []
+#     for idx in topk_idx:
+#         results.append(
+#             type("Result", (), {
+#                 "id": ids[idx],
+#                 "score": float(sims[idx]),
+#                 "payload": payloads[idx]
+#             })()
+#         )
+
+#     return results
+
+def check_vector_exists(id):
+    # Panggil retrieve Qdrant untuk cek ada id-nya
+    result = client.retrieve(collection_name=collection_name, ids=[id])
+    return len(result) > 0
